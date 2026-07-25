@@ -1,21 +1,50 @@
-#include  "sensor_handler.h"
-#include "ethernet_handler.h"
-Adafruit_ADS1X15 ads;
+#include "sensor_handler.h"
 
-float depth_constant = 3; //3 cm / mv
 
-void init_sensor(){
-  Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
-  if (!ads.begin()) {
-    String message = "Failed to Initialize ADC";
-    send_ethernet_data(message);
-    while (1);
+bool DepthSensor::init(){ // changes into boolean. so if the init returns false, we can halt the program on the main file.
+  if (!ads.begin()){
+    Serial.println("depth sensor failed");
+    return false;
   }
+  return true;
 }
 
-float read_depth_sensor(){
-  int16_t raw = ads.readADC_SingleEnded(ADS1115_PRESSURE_CH);
-  float voltage = ads.computeVolts(raw);
-  float depth = voltage * depth_constant;
-  return voltage;
+float DepthSensor::read(){
+  int16_t adc0 = ads.readADC_SingleEnded(0);
+  
+  // Convert the raw value to actual voltage
+  float voltage = ads.computeVolts(adc0);
+
+  float depth = voltage*depth_constant;
+
+  return depth;
+}
+
+bool ImuSensor::init(){ // changes into boolean. so if the init returns false, we can halt the program on the main file.
+
+  Serial.println("initializing IMU");
+  if (!bno.begin()) {
+    Serial.println("failed to initialize IMU");
+    return false;
+  }
+
+  delay(1000);
+  bno.setExtCrystalUse(true);
+  Serial.println("IMU (BNO055) Initialized Successfully.");
+
+  return true;
+}
+
+ImuData ImuSensor::read(){
+  ImuData data; 
+
+  // Request a fused orientation reading (VECTOR_EULER by default with getEvent)
+  sensors_event_t event;
+  bno.getEvent(&event);
+
+  data.yaw = event.orientation.x; // yaw
+  data.roll    = event.orientation.y;
+  data.pitch   = event.orientation.z;
+
+  return data; // so, this sends a struct? what is struct anyway?
 }
