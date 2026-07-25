@@ -1,3 +1,8 @@
+from send_lan import PORT
+from send_lan import HOST
+from data_source import get_data
+import socket
+import struct
 from starlette.responses import HTMLResponse
 import threading
 import time
@@ -13,12 +18,27 @@ telemetry = {
     "depth": 0
 }
 
+udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+udp_client.setblocking(False)
+
 def background_loop():
     while True:
         # print("Background loop running")
-        # TODO: update pitch, roll, yaw, depth
+        rov_data = get_data()
+        message = ",".join(str(x) for x in rov_data)
+        udp_client.sendto(message.encode(), (HOST, PORT))
+        try:
+            data, address_info = udp_client.recvfrom(1024)
+            if len(data) == 16:
+                depth, yaw, roll, pitch = struct.unpack("<ffff", data)
+                telemetry["depth"] = depth
+                telemetry["yaw"] = yaw
+                telemetry["roll"] = roll
+                telemetry["pitch"] = pitch
+        except BlockingIOError:
+            pass
 
-        telemetry["pitch"] += 1 # Example
+        # telemetry["pitch"] += 1 # Example
         time.sleep(0.1)
 
 threading.Thread(target=background_loop, daemon=True).start()

@@ -7,7 +7,7 @@ PORT = 8888
 
 # AF_INET = IPv4, SOCK_DGRAM = UDP protocol
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-client.connect((HOST, PORT))
+# client.connect((HOST, PORT))
 
 while True:
     data = get_data()
