@@ -3,18 +3,23 @@
 bool Ethernet::init() {
   Serial.println("Initializing Ethernet (W5500) with Static IP...");
 
-  ETH.config(STATIC_IP, GATEWAY, SUBNET, GATEWAY, GATEWAY);
+  // 1. Configure Static IP FIRST
+  if (!ETH.config(STATIC_IP, GATEWAY, SUBNET, GATEWAY)) {
+    Serial.println("Static IP Configuration Failed!");
+  }
 
-  if (!ETH.begin()) {
+  // 2. Initialize SPI Bus for Ethernet
+  SPI.begin(ETH_SCLK, ETH_MISO, ETH_MOSI, ETH_CS);
+
+  // 3. Initialize W5500 specifically
+  if (!ETH.begin(ETH_PHY_W5500, 1, ETH_CS, ETH_IRQ, ETH_RST, SPI)) {
     Serial.println("Ethernet hardware failed to initialize.");
     return false;
   }
-  
+
   udp.begin(LOCAL_PORT);
-  
   Serial.print("Ethernet initialized. ROV IP: ");
   Serial.println(ETH.localIP());
-  
   return true;
 }
 

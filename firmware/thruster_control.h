@@ -1,10 +1,9 @@
 #ifndef THRUSTER_CONTROL_H
 #define THRUSTER_CONTROL_H
 
-
 #include <Arduino.h>
 #include <ESP32Servo.h>
-#include "hardware_config.h" // Ensures NUM_THRUSTERS and PWM_FREQ are known
+#include "hardware_config.h"
 #include "ethernet_handler.h"
 
 class ThrusterControl {
