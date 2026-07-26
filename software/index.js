@@ -7,4 +7,5 @@ ws.onmessage = (event) => {
     document.getElementById("roll-value").innerText = data["roll"]
     document.getElementById("yaw-value").innerText = data["yaw"]
     document.getElementById("depth-value").innerText = data["depth"]
+    document.getElementById("qr-value").innerText = data["qr_code"]
 }

@@ -1,0 +1,20 @@
+body {
+    background: white;
+    color: black;
+}
+
+.title {
+    text-align: center;
+}
+
+.dashboard {
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    gap: 5rem;
+}
+
+.telemetry-stats {
+    display: flex;
+    flex-direction: column;
+}
