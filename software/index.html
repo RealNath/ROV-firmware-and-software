@@ -1,19 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ROV Interface</title>
+    <link rel="stylesheet" href="style.css">
     <script src="index.js" type="module"></script>
 </head>
+
 <body>
-    <h1>ROV Interface</h1>
-    <h2>Camera</h2>
-    <img src="" alt="Video stream" id="videoStream" width="300px">
-    <h2>Telemetry</h2>
-    Pitch: <span id="pitch-value">0</span>
-    Roll: <span id="roll-value">0</span>
-    Yaw: <span id="yaw-value">0</span>
-    Depth: <span id="depth-value">0</span>
+    <h1 class="title">ROV Interface</h1>
+
+    <div class="dashboard">
+        <div class="camera">
+            <h2>Camera</h2>
+            <img src="/video_feed" alt="Video stream" id="videoStream" width="300px">
+        </div>
+        <div class="telemetry">
+            <h2>Telemetry</h2>
+            <div class="telemetry-stats">
+                <div>Pitch: <span id="pitch-value">0</span></div>
+                <div>Roll: <span id="roll-value">0</span></div>
+                <div>Yaw: <span id="yaw-value">0</span></div>
+                <div>Depth: <span id="depth-value">0</span></div>
+                <div>QR: <span id="qr-value"></span></div>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>
