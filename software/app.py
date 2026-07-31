@@ -9,9 +9,10 @@ RovTelemetry struct (from firmware, little-endian):
     float depth
     float vel_x, vel_y, vel_z
     float roll, pitch, yaw
+    int8_t temp_c
     bool  isGripperHold (1 byte)
     bool  isLightsOn    (1 byte)
-    Total: 7*4 + 2 = 30 bytes
+    Total: 7*4 + 1 + 1 + 1 = 31 bytes
 
 RovCommand callback struct (firmware echoes the received command):
     uint8_t command
@@ -74,6 +75,7 @@ telemetry = {
     "depth": 0.0,
     "vel_x": 0.0, "vel_y": 0.0, "vel_z": 0.0,
     "roll": 0.0, "pitch": 0.0, "yaw": 0.0,
+    "temp_c": 0,
     "isGripperHold": False,
     "isLightsOn": False,
     "qr_code": "",
@@ -109,8 +111,8 @@ def _recv_loop():
 
         if len(data) == TELEMETRY_SIZE:
             # RovTelemetry
-            depth, vx, vy, vz, roll, pitch, yaw, grip_b, light_b = struct.unpack(
-                "<fffffffBB", data
+            depth, vx, vy, vz, roll, pitch, yaw, temp_int, grip_b, light_b = struct.unpack(
+                "<fffffffiBB", data
             )
             telemetry["depth"]        = round(depth, 3)
             telemetry["vel_x"]        = round(vx, 3)
@@ -119,6 +121,7 @@ def _recv_loop():
             telemetry["roll"]         = round(roll, 3)
             telemetry["pitch"]        = round(pitch, 3)
             telemetry["yaw"]          = round(yaw, 3)
+            telemetry["temp_c"]  = temp_int
             telemetry["isGripperHold"]= bool(grip_b)
             telemetry["isLightsOn"]   = bool(light_b)
 

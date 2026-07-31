@@ -48,18 +48,18 @@
             <span class="telem-unit">°</span>
           </div>
           <div class="telem-item">
-            <span class="telem-label">Vel X</span>
-            <span class="telem-value" id="t-vx">0.000</span>
+            <span class="telem-label">Acc. X</span>
+            <span class="telem-value" id="t-ax">0.000</span>
             <span class="telem-unit">m/s</span>
           </div>
           <div class="telem-item">
-            <span class="telem-label">Vel Y</span>
-            <span class="telem-value" id="t-vy">0.000</span>
+            <span class="telem-label">Acc. Y</span>
+            <span class="telem-value" id="t-ay">0.000</span>
             <span class="telem-unit">m/s</span>
           </div>
           <div class="telem-item">
-            <span class="telem-label">Vel Z</span>
-            <span class="telem-value" id="t-vz">0.000</span>
+            <span class="telem-label">Acc. Z</span>
+            <span class="telem-value" id="t-az">0.000</span>
             <span class="telem-unit">m/s</span>
           </div>
           <div class="telem-item">
@@ -70,13 +70,17 @@
             <span class="telem-label">Lights</span>
             <span class="telem-value badge" id="t-light">OFF</span>
           </div>
+          <div class="telem-item">
+            <span class="telem-label">Temperature</span>
+            <span class="telem-value badge" id="t-temperature">OFF</span>
+          </div>
         </div>
 
         <!-- CorrectDepth form -->
         <div class="depth-form">
-          <h3>Correct Depth</h3>
+          <h3>Correct Depth Constant</h3>
           <div class="depth-form-row">
-            <input type="number" id="depth-input" step="0.001" placeholder="0.000" />
+            <input type="number" id="depth-input" step="0.001" placeholder="Current actual depth (e.g. 0.00)" />
             <button id="depth-submit-btn" onclick="sendCorrectDepth()">Send</button>
           </div>
           <span id="depth-form-status"></span>

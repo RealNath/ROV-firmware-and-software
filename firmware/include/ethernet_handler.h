@@ -44,8 +44,9 @@ struct RovCommand {
 
 struct RovTelemetry {
     float depth;
-    struct { float x, y, z; } velocityData;
+    struct { float x, y, z; } accelerationData;
     struct { float roll, pitch, yaw; } rotationData;
+    int8_t temperature;
     bool isGripperHold;
     bool isLightsOn;
 };

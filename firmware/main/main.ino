@@ -17,22 +17,17 @@ const IPAddress GATEWAY(192, 168, 42, 1);
 const IPAddress SUBNET(255, 255, 255, 0);
 const IPAddress REMOTE_IP(192, 168, 42, 99);
 
-unsigned long last_pid_time = 0;
-unsigned long last_telemetry_time = 0;
+uint64_t last_pid_time = 0;
+uint64_t last_telemetry_time = 0;
 
 
-RovCommand current_cmd = {
-    RovCommandType::Translate,
-    { .translationData = {0.0f, 0.0f, 0.0f} }
-};
-
-
-RovTelemetry current_telem = {
-    0.0f, 
-    {0.0f, 0.0f, 0.0f}, 
-    {0.0f, 0.0f, 0.0f}, 
-    false, 
-    false
+RovTelemetry currTelemetry = {
+    .depth = 0.0f, 
+    .accelerationData = {0.0f, 0.0f, 0.0f}, 
+    .rotationData = {0.0f, 0.0f, 0.0f}, 
+    .temperature = 0,
+    .isGripperHold = false, 
+    .isLightsOn = false
 };
 
 
@@ -74,22 +69,26 @@ void loop() {
     // 2. Execute 50Hz PID Control Loop 
     float dt = (now - last_pid_time) / 1000.0f;
     if(dt >= 0.02f) {
-        
         // Read IMU data
         sensors_vec_t orientationData = sensor->getRotation();
+        sensors_vec_t accData = sensor->getLinearAcceleration();
         sensors_vec_t rotationVel = sensor->getRotationVelocity();
         
-        current_telem.rotationData.yaw = orientationData.x;   // Heading
-        current_telem.rotationData.roll = orientationData.y;  // Roll
-        current_telem.rotationData.pitch = orientationData.z; // Pitch
-        current_telem.depth = sensor->getApproxDepth();       // Depth
+        currTelemetry.accelerationData.x = accData.x;         // Acceleration on X-axis
+        currTelemetry.accelerationData.y = accData.y;         // Acceleration on Y-axis
+        currTelemetry.accelerationData.z = accData.z;         // Acceleration on Z-axis
+        currTelemetry.rotationData.yaw = orientationData.x;   // Heading
+        currTelemetry.rotationData.roll = orientationData.y;  // Roll
+        currTelemetry.rotationData.pitch = orientationData.z; // Pitch
+        currTelemetry.depth = sensor->getApproxDepth();       // Depth
+        currTelemetry.temperature = sensor->getTemperature(); // Temperature
 
         // Run PID for stabilization and write to thrusters
         rovControl.update(rotationVel, dt);
 
         // 3. Send Telemetry to Surface at 10Hz 
         if(now - last_telemetry_time >= 100){
-            eth->sendTelemetry(current_telem);
+            eth->sendTelemetry(currTelemetry);
             last_telemetry_time = now;
         }
 

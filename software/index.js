@@ -24,14 +24,15 @@ ws.onmessage = (event) => {
 
   // Telemetry
   const t = payload.telemetry;
-  document.getElementById("t-depth").textContent  = t.depth.toFixed(3);
-  document.getElementById("t-roll").textContent   = t.roll.toFixed(3);
-  document.getElementById("t-pitch").textContent  = t.pitch.toFixed(3);
-  document.getElementById("t-yaw").textContent    = t.yaw.toFixed(3);
-  document.getElementById("t-vx").textContent     = t.vel_x.toFixed(3);
-  document.getElementById("t-vy").textContent     = t.vel_y.toFixed(3);
-  document.getElementById("t-vz").textContent     = t.vel_z.toFixed(3);
-  document.getElementById("qr-value").textContent = t.qr_code || "—";
+  document.getElementById("t-depth").textContent            = t.depth.toFixed(3);
+  document.getElementById("t-roll").textContent             = t.roll.toFixed(3);
+  document.getElementById("t-pitch").textContent            = t.pitch.toFixed(3);
+  document.getElementById("t-yaw").textContent              = t.yaw.toFixed(3);
+  document.getElementById("t-ax").textContent               = t.vel_x.toFixed(3);
+  document.getElementById("t-ay").textContent               = t.vel_y.toFixed(3);
+  document.getElementById("t-az").textContent               = t.vel_z.toFixed(3);
+  document.getElementById("t-temperature").textContent      = t.temp_c
+  document.getElementById("qr-value").textContent           = t.qr_code || "—";
 
   const gripEl  = document.getElementById("t-grip");
   const lightEl = document.getElementById("t-light");
