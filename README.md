@@ -22,3 +22,5 @@ To launch the ground control GUI web-app, use **docker compose**, no other depen
 cd firmware
 docker compose up --build
 ```
+
+<img width="1010" height="704" alt="image" src="https://github.com/user-attachments/assets/780208ba-5d46-4cd9-95bf-a6a4f21f5a2e" />

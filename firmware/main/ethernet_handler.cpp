@@ -16,16 +16,30 @@ EthernetHandler::EthernetHandler(IPAddress staticIP, IPAddress gatewayIP, IPAddr
 {
     Serial.printf("[ETH] Initializing Ethernet (W5500) with Static IP (%s)\n", staticIP.toString().c_str());
 
-    if(!ETH.config(staticIP, gatewayIP, subnet, gatewayIP)){
-        Serial.println("[ETH] IP Configuration Failed!");
+    if(PIN_W5500_RST != -1){
+        pinMode(PIN_W5500_RST, OUTPUT);
+        digitalWrite(PIN_W5500_RST, LOW);
+        delay(10);
+        digitalWrite(PIN_W5500_RST, HIGH);
+        delay(150);
     }
 
-    SPI.begin(ETH_SCLK, ETH_MISO, ETH_MOSI, ETH_CS);
+    SPI.begin(PIN_SPI_SCK, PIN_SPI_MISO, PIN_SPI_MOSI);
 
-    if(!ETH.begin(ETH_PHY_W5500, 1, ETH_CS, ETH_IRQ, ETH_RST, SPI)) {
+    if(!ETH.begin(ETH_PHY_W5500, 1, PIN_W5500_CS, -1, PIN_W5500_RST, SPI)) {
         Serial.println("[ETH] Ethernet hardware failed to initialize.");
         return;
     }
+
+    if(!ETH.config(staticIP, gatewayIP, subnet, gatewayIP, gatewayIP)){
+        Serial.println("[ETH] IP configuration failed");
+    }
+
+    if(!ETH.linkUp()){
+        Serial.println("[ETH] Ethernet Link DOWN (check if plugged correctly)");
+    }
+
+    delay(3000);
 
     udp = new NetworkUDP();
     udp->begin(LOCAL_PORT);

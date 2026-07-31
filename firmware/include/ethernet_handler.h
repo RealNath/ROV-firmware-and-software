@@ -15,13 +15,6 @@ extern const IPAddress GATEWAY;
 extern const IPAddress SUBNET;
 extern const IPAddress REMOTE_IP;
 
-#define ETH_CS   5   // CS / SS pin
-#define ETH_IRQ  4   // Interrupt pin (-1 if not connected)
-#define ETH_RST  16  // Reset pin (-1 if tied to 3.3V)
-#define ETH_SCLK 18  // SPI SCK
-#define ETH_MISO 19  // SPI MISO
-#define ETH_MOSI 23  // SPI MOSI
-
 enum class RovCommandType : uint8_t {
     Translate,
     Rotate,
