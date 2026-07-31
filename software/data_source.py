@@ -57,18 +57,24 @@ def pack_command(cmd_type: int, f0: float, f1: float = 0.0, f2: float = 0.0) -> 
 
 # ── Module-level state ────────────────────────────────────────────────────────
 _joystick: pygame.joystick.JoystickType | None = None
+_joystick_not_found_notified = False
 _gripper_on   = False
 _light_on     = False
 _prev_buttons = {}
 
 def _init_joystick():
     global _joystick
+    global _joystick_not_found_notified 
+    
     if pygame.joystick.get_count() > 0:
         _joystick = pygame.joystick.Joystick(0)
         _joystick.init()
+        _joystick_not_found_notified = False
         print(f"[JOY] Connected: {_joystick.get_name()}")
-    else:
+
+    elif not _joystick_not_found_notified:
         print("[JOY] No joystick found – running without controller")
+        _joystick_not_found_notified = True
 
 pygame.init()
 pygame.joystick.init()
