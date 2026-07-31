@@ -77,7 +77,6 @@ def _init_joystick():
         _joystick_not_found_notified = True
 
 pygame.init()
-pygame.joystick.init()
 _init_joystick()
 
 
@@ -95,6 +94,7 @@ def get_commands() -> list[tuple[str, bytes]]:
 
     # Try to reconnect joystick if lost
     if _joystick is None:
+        pygame.joystick.init()
         _init_joystick()
 
     commands: list[tuple[str, bytes]] = []
