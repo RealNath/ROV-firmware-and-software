@@ -33,7 +33,7 @@ struct RovCommand {
       bool lightsOn;
       float depthCorrection;
     };
-};
+} __attribute__((packed));
 
 struct RovTelemetry {
     float depth;
