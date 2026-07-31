@@ -24,7 +24,7 @@ COPY pyproject.toml ./
 
 # Install dependencies (fastapi, uvicorn, pyzbar, rtsp, pygame, websockets)
 # Using pip directly to avoid needing uv inside the container, matching your pyproject.toml
-RUN pip install --no-cache-dir fastapi uvicorn pyzbar rtsp pygame websockets
+RUN pip install --no-cache-dir fastapi uvicorn pyzbar rtsp pygame websockets onvif-python
 
 # Copy the rest of the application code
 COPY . .

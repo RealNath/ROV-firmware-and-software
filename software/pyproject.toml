@@ -11,4 +11,5 @@ dependencies = [
     "rtsp>=2.0.3",
     "uvicorn>=0.51.0",
     "websockets>=16.1.1",
+    "onvif-python==0.2.10"
 ]

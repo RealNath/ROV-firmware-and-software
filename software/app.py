@@ -1,5 +1,5 @@
 """
-app.py — ROV Ground Control Station (FastAPI)
+app.py - ROV Ground Control Station (FastAPI)
 
 Networking:
   - UDP send socket (non-blocking):  sends RovCommand packets to ESP32 at ~50 Hz
@@ -32,30 +32,23 @@ from fastapi import FastAPI, WebSocket
 from fastapi.responses import StreamingResponse
 from starlette.responses import HTMLResponse
 
-try:
-    import rtsp
-    RTSP_AVAILABLE = True
-except Exception:
-    RTSP_AVAILABLE = False
-
-try:
-    from pyzbar.pyzbar import decode as qr_decode
-    QR_AVAILABLE = True
-except Exception:
-    QR_AVAILABLE = False
+from camera import discover_and_stream_camera
+import rtsp
+from pyzbar.pyzbar import decode as qr_decode
 
 from data_source import get_commands, pack_correct_depth
 
+
 app = FastAPI()
 
-# ── Network config ─────────────────────────────────────────────────────────────
+# -- Network config -------------------------------------------------------------
 ESP32_IP   = "192.168.42.177"   # ROV static IP  (must match firmware STATIC_IP)
 ESP32_PORT = 8888               # ESP32 listens for commands on this port  (firmware LOCAL_PORT)
 LOCAL_PORT = 8889               # PC listens for telemetry/callbacks        (firmware REMOTE_PORT)
 
-RTSP_URL = "rtsp://admin:123456@192.168.42.206:554/stream1"
+RTSP_URL = discover_and_stream_camera() or "rtsp://admin:123456@192.168.42.206:554/stream1"
 
-# ── Struct sizes (must match firmware) ────────────────────────────────────────
+# -- Struct sizes (must match firmware) ----------------------------------------
 # RovTelemetry: float depth, vel[3], rot[3], bool grip, bool light
 TELEMETRY_SIZE = 7 * 4 + 2   # 30 bytes
 # RovCommand:   uint8 cmd, float[3]
@@ -70,7 +63,7 @@ CMD_NAMES = {
     5: "RovCallback",
 }
 
-# ── Shared state ───────────────────────────────────────────────────────────────
+# -- Shared state ---------------------------------------------------------------
 telemetry = {
     "depth": 0.0,
     "vel_x": 0.0, "vel_y": 0.0, "vel_z": 0.0,
@@ -85,11 +78,11 @@ telemetry = {
 command_log:  deque = deque(maxlen=200)
 callback_log: deque = deque(maxlen=200)
 
-# ── UDP send socket (non-blocking) ─────────────────────────────────────────────
+# -- UDP send socket (non-blocking) ---------------------------------------------
 send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 send_sock.setblocking(False)
 
-# ── UDP recv socket (blocking, dedicated thread) ───────────────────────────────
+# -- UDP recv socket (blocking, dedicated thread) -------------------------------
 recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 recv_sock.bind(("0.0.0.0", LOCAL_PORT))
@@ -102,7 +95,7 @@ def _recv_loop():
         try:
             data, addr = recv_sock.recvfrom(256)
         except socket.timeout:
-            # Normal when ESP32 is not connected — just keep waiting silently
+            # Normal when ESP32 is not connected - just keep waiting silently
             continue
         except Exception as e:
             print(f"[RECV] Error: {e}")
@@ -114,19 +107,19 @@ def _recv_loop():
             depth, vx, vy, vz, roll, pitch, yaw, temp_int, grip_b, light_b = struct.unpack(
                 "<fffffffiBB", data
             )
-            telemetry["depth"]        = round(depth, 3)
-            telemetry["vel_x"]        = round(vx, 3)
-            telemetry["vel_y"]        = round(vy, 3)
-            telemetry["vel_z"]        = round(vz, 3)
-            telemetry["roll"]         = round(roll, 3)
-            telemetry["pitch"]        = round(pitch, 3)
-            telemetry["yaw"]          = round(yaw, 3)
-            telemetry["temp_c"]  = temp_int
-            telemetry["isGripperHold"]= bool(grip_b)
-            telemetry["isLightsOn"]   = bool(light_b)
+            telemetry["depth"]          = round(depth, 3)
+            telemetry["vel_x"]          = round(vx, 3)
+            telemetry["vel_y"]          = round(vy, 3)
+            telemetry["vel_z"]          = round(vz, 3)
+            telemetry["roll"]           = round(roll, 3)
+            telemetry["pitch"]          = round(pitch, 3)
+            telemetry["yaw"]            = round(yaw, 3)
+            telemetry["temp_c"]         = temp_int
+            telemetry["isGripperHold"]  = bool(grip_b)
+            telemetry["isLightsOn"]     = bool(light_b)
 
         elif len(data) == COMMAND_CB_SIZE:
-            # RovCallback — ESP32 echoing the command it executed
+            # RovCallback - ESP32 echoing the command it executed
             cmd_byte, f0, f1, f2 = struct.unpack("<Bfff", data)
             name = CMD_NAMES.get(cmd_byte, f"Unknown({cmd_byte})")
             ts = time.strftime("%H:%M:%S")
@@ -157,10 +150,8 @@ threading.Thread(target=_recv_loop, daemon=True).start()
 threading.Thread(target=_send_loop, daemon=True).start()
 
 
-# ── RTSP + QR video stream ─────────────────────────────────────────────────────
+# -- RTSP + QR video stream -----------------------------------------------------
 def generate_frames():
-    if not RTSP_AVAILABLE:
-        return
     last_qr_time = 0.0
     with rtsp.Client(rtsp_server_uri=RTSP_URL, verbose=False) as client:
         while True:
@@ -168,13 +159,14 @@ def generate_frames():
             if image is None:
                 time.sleep(0.05)
                 continue
-            if QR_AVAILABLE:
-                decoded = qr_decode(image)
-                if decoded:
-                    telemetry["qr_code"] = decoded[0].data.decode()
-                    last_qr_time = time.time()
-                elif time.time() - last_qr_time > 1.0:
-                    telemetry["qr_code"] = ""
+
+            decoded = qr_decode(image)
+            if decoded:
+                telemetry["qr_code"] = decoded[0].data.decode()
+                last_qr_time = time.time()
+            elif time.time() - last_qr_time > 1.0:
+                telemetry["qr_code"] = ""
+
             buf = io.BytesIO()
             image.save(buf, format="JPEG")
             frame = buf.getvalue()
@@ -182,7 +174,7 @@ def generate_frames():
             time.sleep(0.05)
 
 
-# ── HTTP routes ────────────────────────────────────────────────────────────────
+# -- HTTP routes ----------------------------------------------------------------
 @app.get("/")
 async def get_interface():
     with open("index.html", "r") as f:
@@ -218,7 +210,7 @@ async def correct_depth(payload: dict):
     return {"ok": True}
 
 
-# ── WebSocket — push state to browser ─────────────────────────────────────────
+# -- WebSocket - push state to browser -----------------------------------------
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
