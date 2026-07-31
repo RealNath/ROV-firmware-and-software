@@ -2,8 +2,8 @@
 #define HARDWARE_CONFIG_H
 
 // --- I2C BUS (IMU & ADS1115) ---
-#define PIN_I2C_SDA         21
-#define PIN_I2C_SCL         22
+#define PIN_I2C_SDA         8
+#define PIN_I2C_SCL         9
 
 // --- BNO055 ---
 #define BNO_HARDWARE_ID     55
@@ -13,25 +13,28 @@
 #define ESP32_BAUD_RATE 115200
 
 // --- SPI BUS (W5500 ETHERNET) ---
-#define PIN_SPI_MOSI        23
-#define PIN_SPI_MISO        19
-#define PIN_SPI_SCK         18
-#define PIN_W5500_CS        32 // Moved to 32 to avoid strapping pin 5
-#define PIN_W5500_RST       4
+#define PIN_SPI_MOSI        12
+#define PIN_SPI_MISO        13
+#define PIN_SPI_SCK         11
+#define PIN_W5500_CS        10
+#define PIN_W5500_RST       -1
 
 
 // --- BLDC THRUSTER ESCs ---
 #define NUM_THRUSTERS       6
-#define PIN_THRUSTER_FL     13
-#define PIN_THRUSTER_FR     14
-#define PIN_THRUSTER_ML     25
-#define PIN_THRUSTER_MR     26
-#define PIN_THRUSTER_BL     27
-#define PIN_THRUSTER_BR     33
+#define PIN_THRUSTER_FL     4
+#define PIN_THRUSTER_FR     5
+#define PIN_THRUSTER_ML     7
+#define PIN_THRUSTER_MR     16
+#define PIN_THRUSTER_BL     17
+#define PIN_THRUSTER_BR     15
 #define PWM_FREQ            50
 #define ESC_LOW             1000
 #define ESC_HIGH            2000
 #define ESC_NEUTRAL         1500
+
+// --- ADC CHANNELS ---
+#define ADS1115_PRESSURE_CH 0
 
 
 // PID Parameters

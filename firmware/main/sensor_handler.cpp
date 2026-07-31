@@ -66,14 +66,14 @@ int8_t SensorHandler::getTemperature(){
 
 
 float SensorHandler::getApproxDepth(){
-    int16_t adc0 = ads->readADC_SingleEnded(0);
+    int16_t adc0 = ads->readADC_SingleEnded(ADS1115_PRESSURE_CH);
     float voltage = ads->computeVolts(adc0);
     return voltage * depthConstant;
 }
 
 
 void SensorHandler::correctDepthConstant(float recordedDepth){
-    int16_t adc0 = ads->readADC_SingleEnded(0);
+    int16_t adc0 = ads->readADC_SingleEnded(ADS1115_PRESSURE_CH);
     float voltage = ads->computeVolts(adc0);
-    depthConstant = voltage * recordedDepth; 
+    depthConstant = recordedDepth / voltage; 
 }
