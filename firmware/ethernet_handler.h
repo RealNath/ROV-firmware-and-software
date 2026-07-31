@@ -39,7 +39,7 @@ class Ethernet {
 
   public:
     bool init(); 
-    
+
     void sendTelemetry(RovTelemetry data);
     bool receiveCommand(RovCommand &commandOut);
 };

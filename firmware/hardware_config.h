@@ -2,24 +2,24 @@
 #define HARDWARE_CONFIG_H
 
 // --- I2C BUS (IMU & ADS1115) ---
-#define PIN_I2C_SDA         21
-#define PIN_I2C_SCL         22
+#define PIN_I2C_SDA         8
+#define PIN_I2C_SCL         9
 
 // --- SPI BUS (W5500 ETHERNET) ---
-#define PIN_SPI_MOSI        23
-#define PIN_SPI_MISO        19
-#define PIN_SPI_SCK         18
-#define PIN_W5500_CS        32 // Moved to 32 to avoid strapping pin 5
-#define PIN_W5500_RST       4
+#define PIN_SPI_MOSI        12
+#define PIN_SPI_MISO        13
+#define PIN_SPI_SCK         11
+#define PIN_W5500_CS        10
+#define PIN_W5500_RST       -1 // rst here isnt actually wired. so there is no rst on physical. its floating
 
 // --- BLDC THRUSTER ESCs ---
 #define NUM_THRUSTERS          6
-#define PIN_THRUSTER_1         13
-#define PIN_THRUSTER_2         14
-#define PIN_THRUSTER_3         25
-#define PIN_THRUSTER_4         26
-#define PIN_THRUSTER_5         27
-#define PIN_THRUSTER_6         33
+#define PIN_THRUSTER_1         4
+#define PIN_THRUSTER_2         5
+#define PIN_THRUSTER_3         7
+#define PIN_THRUSTER_4         16
+#define PIN_THRUSTER_5         17
+#define PIN_THRUSTER_6         15
 #define PWM_FREQ               50
 
 // --- SERVO PIN ---
