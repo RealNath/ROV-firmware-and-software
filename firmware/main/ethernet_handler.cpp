@@ -33,13 +33,15 @@ EthernetHandler::EthernetHandler(IPAddress staticIP, IPAddress gatewayIP, IPAddr
 
     if(!ETH.config(staticIP, gatewayIP, subnet, gatewayIP, gatewayIP)){
         Serial.println("[ETH] IP configuration failed");
+        return;
     }
+
+    delay(5000);
 
     if(!ETH.linkUp()){
         Serial.println("[ETH] Ethernet Link DOWN (check if plugged correctly)");
+        return;
     }
-
-    delay(3000);
 
     udp = new NetworkUDP();
     udp->begin(LOCAL_PORT);

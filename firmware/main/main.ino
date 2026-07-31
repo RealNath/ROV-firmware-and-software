@@ -35,6 +35,8 @@ RovTelemetry currTelemetry = {
 void setup() {
     Serial.begin(ESP32_BAUD_RATE);
     Wire.begin();
+
+    delay(2000);
     
     // Initialize BNO055 and depth sensor through ADS115
     sensor = new SensorHandler();
