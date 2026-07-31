@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  rov-software:
+    build: .
+    container_name: rov-software
+    network_mode: "host" # Best for UDP discovery/communication with ESP32 and Joystick access
+    privileged: true # Allows access to joystick devices on Linux
+    devices:
+      - /dev/input:/dev/input # Mount joystick/gamepad devices
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SDL_VIDEODRIVER=dummy # Run pygame headlessly
+    volumes:
+      - .:/app # Mount the current directory for live code reloading
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload

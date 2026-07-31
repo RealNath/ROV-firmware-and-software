@@ -1,26 +1,30 @@
 .PHONY: all esp32-build esp32-monitor esp32-reset
 
-ESP32_SRC ?= ./firmware
-ESP32_TARGET ?= main_controller
+ESP32_ROOT ?= firmware
+ESP32_SRC ?= main
 ESP32_PORT ?= /dev/ttyUSB0
 ESP32_FQBN ?= esp32:esp32:esp32
 ESP32_BAUDRATE ?= 115200
 
 
-all: esp32-build esp32-monitor
+all: esp32-build esp32-upload esp32-monitor
 
 esp32-build:
 	@echo -n "[Makefile]: "
 
 	arduino-cli compile \
 		--fqbn $(ESP32_FQBN) \
-		--output-dir $(ESP32_SRC)/build \
-		$(ESP32_SRC)/
+		--build-property "compiler.cpp.extra_flags=-I$(ESP32_ROOT)/include" \
+		--output-dir $(ESP32_ROOT)/build \
+		$(ESP32_ROOT)/$(ESP32_SRC)
+
+esp32-upload:
+	@echo -n "[Makefile]: "
 
 	arduino-cli upload \
 		--fqbn $(ESP32_FQBN) \
 		--port $(ESP32_PORT) \
-		--build-path $(ESP32_SRC)/build
+		--build-path $(ESP32_ROOT)/build
 
 
 esp32-monitor:
@@ -45,4 +49,4 @@ esp32-reset:
 
 esp32-clean:
 	@echo -n "[Makefile]: "
-	if [ -d "$(ESP32_SRC)/build" ]; then rm -rf "$(ESP32_SRC)/build"; fi
+	if [ -d "$(ESP32_ROOT)/build" ]; then rm -rf "$(ESP32_ROOT)/build"; fi

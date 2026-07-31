@@ -1,33 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROV Interface</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="index.js" type="module"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROV Ground Control</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-    <h1 class="title">ROV Interface</h1>
 
-    <div class="dashboard">
-        <div class="camera">
-            <h2>Camera</h2>
-            <img src="/video_feed" alt="Video stream" id="videoStream" width="300px">
+  <header>
+    <h1>ROV Ground Control</h1>
+    <span id="ws-status" class="badge badge-offline">Disconnected</span>
+  </header>
+
+  <main>
+
+    <!-- ── Row 1: Camera + Telemetry ─────────────────────────────────── -->
+    <section class="row">
+
+      <div class="card camera-card">
+        <h2>Camera Feed</h2>
+        <img src="/video_feed" alt="RTSP stream" id="videoStream">
+        <div class="qr-bar">QR: <span id="qr-value">—</span></div>
+      </div>
+
+      <div class="card telemetry-card">
+        <h2>Telemetry</h2>
+        <div class="telem-grid">
+          <div class="telem-item">
+            <span class="telem-label">Depth</span>
+            <span class="telem-value" id="t-depth">0.000</span>
+            <span class="telem-unit">m</span>
+          </div>
+          <div class="telem-item">
+            <span class="telem-label">Roll</span>
+            <span class="telem-value" id="t-roll">0.000</span>
+            <span class="telem-unit">°</span>
+          </div>
+          <div class="telem-item">
+            <span class="telem-label">Pitch</span>
+            <span class="telem-value" id="t-pitch">0.000</span>
+            <span class="telem-unit">°</span>
+          </div>
+          <div class="telem-item">
+            <span class="telem-label">Yaw</span>
+            <span class="telem-value" id="t-yaw">0.000</span>
+            <span class="telem-unit">°</span>
+          </div>
+          <div class="telem-item">
+            <span class="telem-label">Vel X</span>
+            <span class="telem-value" id="t-vx">0.000</span>
+            <span class="telem-unit">m/s</span>
+          </div>
+          <div class="telem-item">
+            <span class="telem-label">Vel Y</span>
+            <span class="telem-value" id="t-vy">0.000</span>
+            <span class="telem-unit">m/s</span>
+          </div>
+          <div class="telem-item">
+            <span class="telem-label">Vel Z</span>
+            <span class="telem-value" id="t-vz">0.000</span>
+            <span class="telem-unit">m/s</span>
+          </div>
+          <div class="telem-item">
+            <span class="telem-label">Gripper</span>
+            <span class="telem-value badge" id="t-grip">OFF</span>
+          </div>
+          <div class="telem-item">
+            <span class="telem-label">Lights</span>
+            <span class="telem-value badge" id="t-light">OFF</span>
+          </div>
         </div>
-        <div class="telemetry">
-            <h2>Telemetry</h2>
-            <div class="telemetry-stats">
-                <div>Pitch: <span id="pitch-value">0</span></div>
-                <div>Roll: <span id="roll-value">0</span></div>
-                <div>Yaw: <span id="yaw-value">0</span></div>
-                <div>Depth: <span id="depth-value">0</span></div>
-                <div>QR: <span id="qr-value"></span></div>
-            </div>
+
+        <!-- CorrectDepth form -->
+        <div class="depth-form">
+          <h3>Correct Depth</h3>
+          <div class="depth-form-row">
+            <input type="number" id="depth-input" step="0.001" placeholder="0.000" />
+            <button id="depth-submit-btn" onclick="sendCorrectDepth()">Send</button>
+          </div>
+          <span id="depth-form-status"></span>
         </div>
-    </div>
+      </div>
+
+    </section>
+
+    <!-- ── Row 2: Command log + Callback log ──────────────────────────── -->
+    <section class="row">
+
+      <div class="card log-card">
+        <h2>Commands Sent <span class="log-count" id="cmd-count">0</span></h2>
+        <div class="log-scroll" id="cmd-log"></div>
+      </div>
+
+      <div class="card log-card">
+        <h2>ESP32 Callbacks <span class="log-count" id="cb-count">0</span></h2>
+        <div class="log-scroll" id="cb-log"></div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="index.js" type="module"></script>
 </body>
-
 </html>
