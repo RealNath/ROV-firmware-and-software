@@ -50,3 +50,4 @@ esp32-reset:
 esp32-clean:
 	@echo -n "[Makefile]: "
 	if [ -d "$(ESP32_ROOT)/build" ]; then rm -rf "$(ESP32_ROOT)/build"; fi
+	if [ -d "$(ESP32_ROOT)/$(ESP32_SRC)/build" ]; then rm -rf "$(ESP32_ROOT)/$(ESP32_SRC)/build"; fi
