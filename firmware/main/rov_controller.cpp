@@ -34,7 +34,6 @@ void RovController::update(const sensors_vec_t& rotationVelocity, float dt) {
 
     float yawEffort = manual_yaw;
     if (abs(manual_yaw) < 0.05f) {
-        // Assume rotationVelocity.z is yaw rate in degrees/sec or rad/sec
         yawEffort = yawRatePID.compute(0.0f, rotationVelocity.z, dt);
     }
     else {
@@ -51,8 +50,8 @@ void RovController::update(const sensors_vec_t& rotationVelocity, float dt) {
 
     // Force mixing
     float fl = manual_surge + manual_sway + yawEffort;
-    float fr = manual_surge - manual_sway - yawEffort;
-    float bl = manual_surge - manual_sway + yawEffort;
+    float fr = -(manual_surge - manual_sway - yawEffort);
+    float bl = -(manual_surge - manual_sway + yawEffort);
     float br = manual_surge + manual_sway - yawEffort;
     
     float ml = manual_heave + rollEffort;

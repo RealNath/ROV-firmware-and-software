@@ -42,7 +42,7 @@ esp32-reset:
 		echo "Port $(ESP32_PORT) is busy, close serial monitor or other process which uses this port first before resetting."; \
 		exit 1; \
 	fi; \
-	esptool --chip esp32 \
+	esptool --chip $(word 3, $(subst :, ,$(ESP32_FQBN))) \
 		--port $(ESP32_PORT) \
 		--no-stub flash_id
 

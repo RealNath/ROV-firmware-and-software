@@ -23,11 +23,11 @@
 // --- BLDC THRUSTER ESCs ---
 #define NUM_THRUSTERS       6
 #define PIN_THRUSTER_FL     4
-#define PIN_THRUSTER_FR     5
+#define PIN_THRUSTER_FR     15
 #define PIN_THRUSTER_ML     7
-#define PIN_THRUSTER_MR     16
-#define PIN_THRUSTER_BL     17
-#define PIN_THRUSTER_BR     15
+#define PIN_THRUSTER_MR     17
+#define PIN_THRUSTER_BL     5
+#define PIN_THRUSTER_BR     16
 #define PWM_FREQ            50
 #define ESC_LOW             1000
 #define ESC_HIGH            2000

@@ -49,8 +49,8 @@ LOCAL_PORT = 8889               # PC listens for telemetry/callbacks        (fir
 RTSP_URL = discover_and_stream_camera() or "rtsp://admin:123456@192.168.42.206:554/stream1"
 
 # -- Struct sizes (must match firmware) ----------------------------------------
-# RovTelemetry: float depth, vel[3], rot[3], bool grip, bool light
-TELEMETRY_SIZE = 7 * 4 + 2   # 30 bytes
+# RovTelemetry: float depth, vel[3], rot[3], int8 temperature, bool grip, bool light
+TELEMETRY_SIZE = 7 * 4 + 1 + 2   # 31 bytes
 # RovCommand:   uint8 cmd, float[3]
 COMMAND_CB_SIZE = 1 + 3 * 4   # 13 bytes
 
@@ -81,6 +81,7 @@ callback_log: deque = deque(maxlen=200)
 # -- UDP send socket (non-blocking) ---------------------------------------------
 send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 send_sock.setblocking(False)
+send_sock.bind(('0.0.0.0', ESP32_PORT))
 
 # -- UDP recv socket (blocking, dedicated thread) -------------------------------
 recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -152,12 +153,16 @@ threading.Thread(target=_send_loop, daemon=True).start()
 
 # -- RTSP + QR video stream -----------------------------------------------------
 def generate_frames():
+    FRAME_DELAY = 0.033
+    FPS = int(1 / FRAME_DELAY)
+
     last_qr_time = 0.0
     with rtsp.Client(rtsp_server_uri=RTSP_URL, verbose=False) as client:
         while True:
             image = client.read()
+            width, height
             if image is None:
-                time.sleep(0.05)
+                time.sleep(FRAME_DELAY)
                 continue
 
             decoded = qr_decode(image)
@@ -171,7 +176,7 @@ def generate_frames():
             image.save(buf, format="JPEG")
             frame = buf.getvalue()
             yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
-            time.sleep(0.05)
+            time.sleep(FRAME_DELAY)
 
 
 # -- HTTP routes ----------------------------------------------------------------

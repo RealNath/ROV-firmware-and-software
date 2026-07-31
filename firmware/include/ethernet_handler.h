@@ -42,7 +42,7 @@ struct RovTelemetry {
     int8_t temperature;
     bool isGripperHold;
     bool isLightsOn;
-};
+} __attribute__((packed));
 
 
 class EthernetHandler {
