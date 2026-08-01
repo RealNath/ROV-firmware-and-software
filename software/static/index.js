@@ -1,4 +1,4 @@
-// index.js — WebSocket client for ROV Ground Control
+// index.js --- WebSocket client for ROV Ground Control
 
 const ws = new WebSocket(`ws://${location.host}/ws`);
 
@@ -8,7 +8,35 @@ const cbLog      = document.getElementById("cb-log");
 const cmdCount   = document.getElementById("cmd-count");
 const cbCount    = document.getElementById("cb-count");
 
-// ── WebSocket status ───────────────────────────────────────────────────────
+function initLiveClock() {
+  const timeElement = document.getElementById('live-datetime');
+  
+  function updateClock() {
+    if (!timeElement) return;
+    
+    const now = new Date();
+    
+    const dateOptions = { 
+      weekday: 'short', 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    };
+    
+    const dateStr = now.toLocaleDateString('id-ID', dateOptions);
+    const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
+    
+    timeElement.textContent = `${dateStr} --- ${timeStr} WIB`;
+  }
+
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+// Initialize clock when DOM is loaded
+document.addEventListener('DOMContentLoaded', initLiveClock);
+
+// -- WebSocket status -------------------------------------------------------
 ws.onopen = () => {
   wsStatus.textContent = "Connected";
   wsStatus.className = "badge badge-online";
@@ -18,7 +46,7 @@ ws.onclose = () => {
   wsStatus.className = "badge badge-offline";
 };
 
-// ── Main message handler ───────────────────────────────────────────────────
+// -- Main message handler ---------------------------------------------------
 ws.onmessage = (event) => {
   const payload = JSON.parse(event.data);
 
@@ -32,7 +60,7 @@ ws.onmessage = (event) => {
   document.getElementById("t-ay").textContent               = t.vel_y.toFixed(3);
   document.getElementById("t-az").textContent               = t.vel_z.toFixed(3);
   document.getElementById("t-temperature").textContent      = t.temp_c
-  document.getElementById("qr-value").textContent           = t.qr_code || "—";
+  document.getElementById("qr-value").textContent           = t.qr_code || "---";
 
   const gripEl  = document.getElementById("t-grip");
   const lightEl = document.getElementById("t-light");
@@ -48,7 +76,7 @@ ws.onmessage = (event) => {
   renderLog(cbLog, payload.callbacks, "cb", cbCount);
 };
 
-// ── Log renderer ───────────────────────────────────────────────────────────
+// -- Log renderer -----------------------------------------------------------
 function renderLog(container, entries, cssClass, countEl) {
   if (!entries || entries.length === 0) return;
   countEl.textContent = entries.length;
@@ -69,7 +97,7 @@ function renderLog(container, entries, cssClass, countEl) {
   container.appendChild(frag);
 }
 
-// ── CorrectDepth form ──────────────────────────────────────────────────────
+// -- CorrectDepth form ------------------------------------------------------
 window.sendCorrectDepth = async function () {
   const input  = document.getElementById("depth-input");
   const status = document.getElementById("depth-form-status");

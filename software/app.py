@@ -28,11 +28,17 @@ import time
 import socket
 from collections import deque
 
+import logging
+from pathlib import Path
+import cv2
+import numpy as np
+
 from fastapi import FastAPI, WebSocket
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 
-from camera import discover_and_stream_camera
+from camera import discover_and_stream_camera, check_opencv_environment
 import rtsp
 from pyzbar.pyzbar import decode as qr_decode
 
@@ -40,12 +46,37 @@ from data_source import get_commands, pack_correct_depth
 
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Directory & Logger Setup
+DATA_DIR = Path("data")
+VIDEO_DIR = DATA_DIR / "video"
+LOG_DIR = DATA_DIR / "logs"
+
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+log_filepath = LOG_DIR / f"rov_dagonaut_{time.strftime('%Y%m%d_%H%M%S')}.log"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler(log_filepath),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("ROV")
+
+
 
 # -- Network config -------------------------------------------------------------
 ESP32_IP   = "192.168.42.177"   # ROV static IP  (must match firmware STATIC_IP)
 ESP32_PORT = 8888               # ESP32 listens for commands on this port  (firmware LOCAL_PORT)
 LOCAL_PORT = 8889               # PC listens for telemetry/callbacks        (firmware REMOTE_PORT)
 
+check_opencv_environment()
 RTSP_URL = discover_and_stream_camera() or "rtsp://admin:123456@192.168.42.206:554/stream1"
 
 # -- Struct sizes (must match firmware) ----------------------------------------
@@ -119,6 +150,8 @@ def _recv_loop():
             telemetry["isGripperHold"]  = bool(grip_b)
             telemetry["isLightsOn"]     = bool(light_b)
 
+            logger.info(f"[receiver] TELEMETRY RECEIVED: {telemetry}")
+
         elif len(data) == COMMAND_CB_SIZE:
             # RovCallback - ESP32 echoing the command it executed
             cmd_byte, f0, f1, f2 = struct.unpack("<Bfff", data)
@@ -130,7 +163,12 @@ def _recv_loop():
                 entry = f"[{ts}] CB Rotate     roll={f0:+.2f} pitch={f1:+.2f} yaw={f2:+.2f}"
             else:
                 entry = f"[{ts}] CB {name}  val={f0:.3f}"
+
             callback_log.appendleft(entry)
+            logger.info(f"[receiver] CALLBACK RECEIVED: {entry}")
+        
+        else:
+            logger.info(f"[receiver] UNKNOWN DATA RECEIVED (raw bytes): {data}")
 
 
 def _send_loop():
@@ -144,6 +182,7 @@ def _send_loop():
                 pass
             ts = time.strftime("%H:%M:%S")
             command_log.appendleft(f"[{ts}] {label}")
+            logger.info(f"[sender] COMMAND SENT: {label}")
         time.sleep(0.02)  # 50 Hz
 
 
@@ -156,44 +195,58 @@ def generate_frames():
     FRAME_DELAY = 0.033
     FPS = int(1 / FRAME_DELAY)
 
+    # Video Writer Initialization
+    video_filename = str(VIDEO_DIR / f"rov_dagonaut_{time.strftime('%Y%m%d_%H%M%S')}.avi")
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    video_writer = None
+
     last_qr_time = 0.0
-    with rtsp.Client(rtsp_server_uri=RTSP_URL, verbose=False) as client:
-        while True:
-            image = client.read()
-            width, height
-            if image is None:
+    try:
+        with rtsp.Client(rtsp_server_uri=RTSP_URL, verbose=False) as client:
+            while True:
+                image = client.read()
+                width, height
+                if image is None:
+                    time.sleep(FRAME_DELAY)
+                    continue
+                
+                # Save video feed frame-by-frame
+                if video_writer is None:
+                    video_writer = cv2.VideoWriter(video_filename, fourcc, FPS, (image.width, image.height))
+
+                frame_bgr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+                video_writer.write(frame_bgr)
+
+                decoded = qr_decode(image)
+                if decoded:
+                    telemetry["qr_code"] = decoded[0].data.decode()
+                    last_qr_time = time.time()
+                    logger.info(f"[camera] QR CODE SCANNED: {telemetry['qr_code']}")
+
+                elif time.time() - last_qr_time > 1.0:
+                    telemetry["qr_code"] = ""
+
+                buf = io.BytesIO()
+                image.save(buf, format="JPEG")
+                frame = buf.getvalue()
+                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
                 time.sleep(FRAME_DELAY)
-                continue
 
-            decoded = qr_decode(image)
-            if decoded:
-                telemetry["qr_code"] = decoded[0].data.decode()
-                last_qr_time = time.time()
-            elif time.time() - last_qr_time > 1.0:
-                telemetry["qr_code"] = ""
+    except TimeoutError:
+        print(f"[CAMERA] Timed out, unable to connect into RTSP stream URL '{RTSP_URL}'")
 
-            buf = io.BytesIO()
-            image.save(buf, format="JPEG")
-            frame = buf.getvalue()
-            yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
-            time.sleep(FRAME_DELAY)
+    except Exception as e:
+        print(f"[CAMERA] Unknown error: '{e}'")
+        
+    finally:
+        if video_writer is not None:
+            video_writer.release()
 
 
 # -- HTTP routes ----------------------------------------------------------------
 @app.get("/")
 async def get_interface():
-    with open("index.html", "r") as f:
-        return HTMLResponse(f.read())
-
-@app.get("/index.js")
-async def get_js():
-    with open("index.js", "r") as f:
-        return HTMLResponse(f.read(), media_type="application/javascript")
-
-@app.get("/style.css")
-async def get_css():
-    with open("style.css", "r") as f:
-        return HTMLResponse(f.read(), media_type="text/css")
+    return FileResponse("templates/index.html")
 
 @app.get("/video_feed")
 async def get_video_feed():
@@ -206,12 +259,16 @@ async def correct_depth(payload: dict):
     """Endpoint called by the web UI to send a CorrectDepth command."""
     depth_val = float(payload.get("depth", 0.0))
     label, pkt = pack_correct_depth(depth_val)
+
     try:
         send_sock.sendto(pkt, (ESP32_IP, ESP32_PORT))
     except Exception as e:
         return {"ok": False, "error": str(e)}
+        
     ts = time.strftime("%H:%M:%S")
     command_log.appendleft(f"[{ts}] {label}")
+    logger.info(f"[sender] COMMAND SENT: {label} (depth correction: {depth_val} meter)")
+
     return {"ok": True}
 
 

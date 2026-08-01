@@ -4,24 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ROV Ground Control</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
   <header>
-    <h1>ROV Ground Control</h1>
-    <span id="ws-status" class="badge badge-offline">Disconnected</span>
+    <div class="header-left">
+      <div class="title-row">
+        <h1>ROV Operation Control</h1>
+        <span id="ws-status" class="badge badge-offline">Disconnected</span>
+      </div>
+      <div class="meta-row">
+        <span class="team-name">TIM DAGONAUT - Unit Robotika Institut Teknologi Bandung</span>
+        <span class="meta-divider">|</span>
+        <span id="live-datetime" class="meta-time">Loading date and time</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="logo-group">
+        <img src="/static/images/logo-dagonaut.png" alt="Logo Dagonaout" class="header-logo">
+        <img src="/static/images/logo-itb.png" alt="Logo ITB" class="header-logo">
+      </div>
+    </div>
   </header>
 
   <main>
 
-    <!-- ── Row 1: Camera + Telemetry ─────────────────────────────────── -->
+    <!-- -- Row 1: Camera + Telemetry ----------------------------------- -->
     <section class="row">
 
       <div class="card camera-card">
         <h2>Camera Feed</h2>
         <img src="/video_feed" alt="RTSP stream" id="videoStream">
-        <div class="qr-bar">QR: <span id="qr-value">—</span></div>
+        <div class="qr-bar">QR: <span id="qr-value">------</span></div>
       </div>
 
       <div class="card telemetry-card">
@@ -80,7 +96,7 @@
         <div class="depth-form">
           <h3>Correct Depth Constant</h3>
           <div class="depth-form-row">
-            <input type="number" id="depth-input" step="0.001" placeholder="Current actual depth (e.g. 0.00)" />
+            <input type="number" id="depth-input" step="0.001" placeholder="Measured depth (e.g. 0.00)" />
             <button id="depth-submit-btn" onclick="sendCorrectDepth()">Send</button>
           </div>
           <span id="depth-form-status"></span>
@@ -89,7 +105,7 @@
 
     </section>
 
-    <!-- ── Row 2: Command log + Callback log ──────────────────────────── -->
+    <!-- -- Row 2: Command log + Callback log ---------------------------- -->
     <section class="row">
 
       <div class="card log-card">
@@ -106,6 +122,6 @@
 
   </main>
 
-  <script src="index.js" type="module"></script>
+  <script src="/static/index.js" type="module"></script>
 </body>
 </html>

@@ -42,3 +42,24 @@ def discover_and_stream_camera():
     except Exception as e:
         print(f"[CAMERA] Unknown error: {e}")
         return None
+
+
+
+def check_opencv_environment():
+    try:
+        import cv2
+        import numpy as np
+
+        # 1. Test basic image array creation & C++ color space conversion
+        dummy_frame = np.zeros((100, 100, 3), dtype=np.uint8)
+        _ = cv2.cvtColor(dummy_frame, cv2.COLOR_BGR2GRAY)
+
+        # 2. Test VideoWriter codec availability
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        test_writer = cv2.VideoWriter()
+        
+        print(f"[CAMERA] OpenCV dependency check successful (cv2 version: {cv2.__version__})")
+
+    except Exception as e:
+        print(f"[CAMERA] OpenCV dependency check failed, missing system libraries or codecs: {e}")
+        raise e
