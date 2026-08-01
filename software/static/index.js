@@ -17,9 +17,9 @@ function initLiveClock() {
     const now = new Date();
     
     const dateOptions = { 
-      weekday: 'short', 
+      weekday: 'long', 
       year: 'numeric', 
-      month: 'short', 
+      month: 'long', 
       day: 'numeric' 
     };
     
@@ -68,6 +68,11 @@ ws.onmessage = (event) => {
   gripEl.className    = "telem-value badge " + (t.isGripperHold ? "badge-on" : "badge-off");
   lightEl.textContent = t.isLightsOn ? "ON" : "OFF";
   lightEl.className   = "telem-value badge " + (t.isLightsOn ? "badge-on" : "badge-off");
+
+  // Visualizer section
+  if(window.rov3DEngine && t) {
+      window.rov3DEngine.updateTelemetry(t);
+  }
 
   // Command log
   renderLog(cmdLog, payload.commands, "cmd", cmdCount);

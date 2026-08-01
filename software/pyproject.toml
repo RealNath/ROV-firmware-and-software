@@ -11,5 +11,7 @@ dependencies = [
     "rtsp>=2.0.3",
     "uvicorn>=0.51.0",
     "websockets>=16.1.1",
-    "onvif-python==0.2.10"
+    "onvif-python==0.2.10",
+    "opencv-python-headless==5.0.0.93",
+    "numpy==2.5.1"
 ]

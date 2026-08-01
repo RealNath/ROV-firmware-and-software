@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ROV Ground Control</title>
+  <title>ROV Control</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
@@ -103,6 +105,17 @@
         </div>
       </div>
 
+      <!-- 3D telemetry data visualization  -->
+      <div class="card" style="background: #0f172a; border-radius: 12px; padding: 16px; color: #fff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h3 style="margin: 0; font-family: sans-serif;">ROV Trajectory</h3>
+          <button id="reset-trail-btn" style="background: #334155; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Clear Trail</button>
+        </div>
+        
+        <div id="rov-3d-container" style="width: 100%; height: 450px; border-radius: 8px; overflow: hidden; position: relative;">
+        </div>
+      </div>
+
     </section>
 
     <!-- -- Row 2: Command log + Callback log ---------------------------- -->
@@ -123,5 +136,6 @@
   </main>
 
   <script src="/static/index.js" type="module"></script>
+  <script src="/static/visualizer.js"></script>
 </body>
 </html>
