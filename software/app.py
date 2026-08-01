@@ -26,6 +26,7 @@ import struct
 import threading
 import time
 import socket
+import signal
 from collections import deque
 
 import logging
@@ -53,6 +54,8 @@ DATA_DIR = Path("data")
 VIDEO_DIR = DATA_DIR / "video"
 LOG_DIR = DATA_DIR / "logs"
 
+VIDEO_WRITER = None
+
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -69,6 +72,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ROV")
 
+
+# -- Interrupt handler ----
+def handle_signal(signum, frame):
+    global VIDEO_WRITER
+    logger.info(f"\n[SIGNAL] Received signal {signum}, saving video and exiting")
+    if VIDEO_WRITER is not None and VIDEO_WRITER.isOpened():
+        VIDEO_WRITER.release()
+    sys.exit(0)
+
+if hasattr(signal, 'SIGINT'):
+    signal.signal(signal.SIGINT, handle_signal)
+
+if hasattr(signal, 'SIGTERM'):
+    signal.signal(signal.SIGTERM, handle_signal)
+
+if hasattr(signal, 'SIGBREAK'):
+    signal.signal(signal.SIGBREAK, handle_signal)
 
 
 # -- Network config -------------------------------------------------------------
@@ -192,13 +212,13 @@ threading.Thread(target=_send_loop, daemon=True).start()
 
 # -- RTSP + QR video stream -----------------------------------------------------
 def generate_frames():
+    global VIDEO_WRITER
     FRAME_DELAY = 0.033
     FPS = int(1 / FRAME_DELAY)
 
     # Video Writer Initialization
     video_filename = str(VIDEO_DIR / f"rov_dagonaut_{time.strftime('%Y%m%d_%H%M%S')}.avi")
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    video_writer = None
 
     last_qr_time = 0.0
     try:
@@ -211,11 +231,11 @@ def generate_frames():
                     continue
                 
                 # Save video feed frame-by-frame
-                if video_writer is None:
-                    video_writer = cv2.VideoWriter(video_filename, fourcc, FPS, (image.width, image.height))
+                if VIDEO_WRITER is None:
+                    VIDEO_WRITER = cv2.VideoWriter(video_filename, fourcc, FPS, (image.width, image.height))
 
                 frame_bgr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-                video_writer.write(frame_bgr)
+                VIDEO_WRITER.write(frame_bgr)
 
                 decoded = qr_decode(image)
                 if decoded:
@@ -239,8 +259,8 @@ def generate_frames():
         print(f"[CAMERA] Unknown error: '{e}'")
         
     finally:
-        if video_writer is not None:
-            video_writer.release()
+        if VIDEO_WRITER is not None:
+            VIDEO_WRITER.release()
 
 
 # -- HTTP routes ----------------------------------------------------------------
