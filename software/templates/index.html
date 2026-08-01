@@ -48,37 +48,37 @@
           <div class="telem-item">
             <span class="telem-label">Depth</span>
             <span class="telem-value" id="t-depth">0.000</span>
-            <span class="telem-unit">m</span>
+            <span class="telem-unit">meter</span>
           </div>
           <div class="telem-item">
             <span class="telem-label">Roll</span>
             <span class="telem-value" id="t-roll">0.000</span>
-            <span class="telem-unit">°</span>
+            <span class="telem-unit">degree</span>
           </div>
           <div class="telem-item">
             <span class="telem-label">Pitch</span>
             <span class="telem-value" id="t-pitch">0.000</span>
-            <span class="telem-unit">°</span>
+            <span class="telem-unit">degree</span>
           </div>
           <div class="telem-item">
             <span class="telem-label">Yaw</span>
             <span class="telem-value" id="t-yaw">0.000</span>
-            <span class="telem-unit">°</span>
+            <span class="telem-unit">degree</span>
           </div>
           <div class="telem-item">
             <span class="telem-label">Acc. X</span>
             <span class="telem-value" id="t-ax">0.000</span>
-            <span class="telem-unit">m/s</span>
+            <span class="telem-unit">meter / second²</span>
           </div>
           <div class="telem-item">
             <span class="telem-label">Acc. Y</span>
             <span class="telem-value" id="t-ay">0.000</span>
-            <span class="telem-unit">m/s</span>
+            <span class="telem-unit">meter / second²</span>
           </div>
           <div class="telem-item">
             <span class="telem-label">Acc. Z</span>
             <span class="telem-value" id="t-az">0.000</span>
-            <span class="telem-unit">m/s</span>
+            <span class="telem-unit">meter / second²</span>
           </div>
           <div class="telem-item">
             <span class="telem-label">Gripper</span>
@@ -89,8 +89,9 @@
             <span class="telem-value badge" id="t-light">OFF</span>
           </div>
           <div class="telem-item">
-            <span class="telem-label">Internal Temperature (celcius)</span>
+            <span class="telem-label">Internal Temperature </span>
             <span class="telem-value badge" id="t-temperature">OFF</span>
+            <span class="telem-unit">celcius</span>
           </div>
         </div>
 
@@ -98,7 +99,7 @@
         <div class="depth-form">
           <h3>Correct Depth Constant</h3>
           <div class="depth-form-row">
-            <input type="number" id="depth-input" step="0.001" placeholder="Measured depth (e.g. 0.00)" />
+            <input type="number" id="depth-input" step="0.001" placeholder="Measured depth (m)" />
             <button id="depth-submit-btn" onclick="sendCorrectDepth()">Send</button>
           </div>
           <span id="depth-form-status"></span>
