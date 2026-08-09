@@ -2,7 +2,7 @@
 
 
 SensorHandler::SensorHandler(): depthConstant(DEFAULT_DEPTH_CONSTANT), initialized(false) {
-    Serial.println("[SENSOR] Initializing BNO055");
+    Serial.println("\n[SENSOR] Initializing BNO055");
     bno = new Adafruit_BNO055(BNO_HARDWARE_ID, BNO_I2C_ADDR, &Wire);
     if(!bno->begin()){
         Serial.println("[SENSOR] Failed to initialize BNO055");

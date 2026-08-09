@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Reset & base ─────────────────────────────────────────────────── */
+/* -- Reset & base --------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -27,14 +27,27 @@ body {
   min-height: 100vh;
 }
 
-/* ── Header ───────────────────────────────────────────────────────── */
+/* -- Header --------------------------------------------------------- */
 header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem 2rem;
+  justify-content: space-between; /* Separates left details and right logos */
+  padding: 0.85rem 2rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  gap: 1.5rem;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
 }
 
 header h1 {
@@ -46,7 +59,53 @@ header h1 {
   -webkit-text-fill-color: transparent;
 }
 
-/* ── Layout ───────────────────────────────────────────────────────── */
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.team-name {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.meta-divider {
+  color: var(--border);
+}
+
+.meta-time {
+  color: var(--text);
+}
+
+/* -- Top-Right Logos ------------------------------------------------ */
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--surface2);
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.header-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* -- Layout --------------------------------------------------------- */
 main {
   padding: var(--gap) 2rem 2rem;
   display: flex;
@@ -61,7 +120,7 @@ main {
   flex-wrap: wrap;
 }
 
-/* ── Card ─────────────────────────────────────────────────────────── */
+/* -- Card ----------------------------------------------------------- */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -82,7 +141,7 @@ main {
   gap: 0.5rem;
 }
 
-/* ── Badge ────────────────────────────────────────────────────────── */
+/* -- Badge ---------------------------------------------------------- */
 .badge {
   display: inline-block;
   padding: 0.15rem 0.55rem;
@@ -98,11 +157,15 @@ main {
 .badge-on  { background: #1a3b26; color: var(--accent2); }
 .badge-off { background: var(--surface2); color: var(--muted); }
 
-/* ── Camera card ──────────────────────────────────────────────────── */
-.camera-card { flex: 0 1 420px; }
+/* -- Camera card ---------------------------------------------------- */
+.camera-card { 
+  flex: 3 1 600px;
+}
 
 .camera-card img {
   width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #000;
@@ -118,10 +181,14 @@ main {
 
 .qr-bar span { color: var(--accent); }
 
-/* ── Telemetry grid ───────────────────────────────────────────────── */
+/* -- Telemetry grid ------------------------------------------------- */
+.telemetry-card {
+  flex: 1 1 320px;
+}
+
 .telem-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
@@ -156,7 +223,7 @@ main {
   color: var(--muted);
 }
 
-/* ── CorrectDepth form ────────────────────────────────────────────── */
+/* -- CorrectDepth form ---------------------------------------------- */
 .depth-form {
   border-top: 1px solid var(--border);
   padding-top: 1rem;
@@ -217,7 +284,7 @@ main {
   min-height: 1rem;
 }
 
-/* ── Log cards ────────────────────────────────────────────────────── */
+/* -- Log cards ------------------------------------------------------ */
 .log-card { flex: 1 1 400px; }
 
 .log-count {

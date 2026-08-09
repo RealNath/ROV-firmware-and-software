@@ -33,7 +33,7 @@ struct RovCommand {
       bool lightsOn;
       float depthCorrection;
     };
-};
+} __attribute__((packed));
 
 struct RovTelemetry {
     float depth;
@@ -42,7 +42,7 @@ struct RovTelemetry {
     int8_t temperature;
     bool isGripperHold;
     bool isLightsOn;
-};
+} __attribute__((packed));
 
 
 class EthernetHandler {
