@@ -39,7 +39,7 @@ void RovController::update() {
     float mr = manual_heave - rollEffort;
     
     // Normalize to [-1, 1] if exceeding
-    float max_horiz = max(max(abs(fl), abs(fr)), max(abs(bl), abs(br)));
+    float max_horiz = max(max(fabs(fl), fabs(fr)), max(fabs(bl), fabs(br)));
     if(max_horiz > 1.0f) {
         fl /= max_horiz;
         fr /= max_horiz;
@@ -47,7 +47,7 @@ void RovController::update() {
         br /= max_horiz;
     }
     
-    float max_vert = max(abs(ml), abs(mr));
+    float max_vert = max(fabs(ml), fabs(mr));
     if(max_vert > 1.0f) {
         ml /= max_vert;
         mr /= max_vert;
