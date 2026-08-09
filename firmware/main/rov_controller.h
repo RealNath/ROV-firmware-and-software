@@ -1,8 +1,9 @@
 #pragma once
 #include "ethernet_handler.h"
 #include "thruster_control.h"
-#include "pid_controller.h"
 #include "sensor_handler.h"
+
+// pid_controller.h removed
 
 class RovController {
 private:
@@ -15,9 +16,7 @@ private:
     float manual_yaw;
     float manual_roll;
     
-    // PIDs for stabilization (zero speed when idle)
-    PID yawRatePID;
-    PID rollRatePID;
+    // PID objects removed
     
     float mapToPWM(float normalizedValue);
 
