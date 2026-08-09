@@ -47,42 +47,22 @@ void ThrusterHandler::setFrontRight(int microseconds){
     set(1, microseconds);
 }
 
+// Invert middle and back thrusters
+
 void ThrusterHandler::setMiddleLeft(int microseconds){
-    if(microseconds > ESC_NEUTRAL){
-        set(2, ESC_NEUTRAL - (microseconds - ESC_NEUTRAL));
-    }
-    else{
-        set(2, ESC_NEUTRAL + (ESC_NEUTRAL - microseconds));
-    }
+    set(2, (2 * ESC_NEUTRAL) - microseconds);
 }
 
 void ThrusterHandler::setMiddleRight(int microseconds){
-    if(microseconds > ESC_NEUTRAL){
-        set(3, ESC_NEUTRAL - (microseconds - ESC_NEUTRAL));
-    }
-    else{
-        set(3, ESC_NEUTRAL + (ESC_NEUTRAL - microseconds));
-    }
+    set(3, (2 * ESC_NEUTRAL) - microseconds);
 }
-
 
 void ThrusterHandler::setBackLeft(int microseconds){
-    if(microseconds > ESC_NEUTRAL){
-        set(4, ESC_NEUTRAL - (microseconds - ESC_NEUTRAL));
-    }
-    else{
-        set(4, ESC_NEUTRAL + (ESC_NEUTRAL - microseconds));
-    }
+    set(4, (2 * ESC_NEUTRAL) - microseconds);
 }
 
-
 void ThrusterHandler::setBackRight(int microseconds){
-    if(microseconds > ESC_NEUTRAL){
-        set(5, ESC_NEUTRAL - (microseconds - ESC_NEUTRAL));
-    }
-    else{
-        set(5, ESC_NEUTRAL + (ESC_NEUTRAL - microseconds));
-    }
+    set(5, (2 * ESC_NEUTRAL) - microseconds);
 }
 
 

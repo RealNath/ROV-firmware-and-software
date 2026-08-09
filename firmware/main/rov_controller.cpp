@@ -6,10 +6,8 @@ RovController::RovController(ThrusterHandler *thrusters) :
     thrusters(thrusters) {}
 
 
-float RovController::mapToPWM(float val) {
-    if(val < -1.0f) val = -1.0f;
-    if(val > 1.0f) val = 1.0f;
-    return 1500.0f + (val * 400.0f);
+float RovController::mapToPWM(float val) { // Assume val is already between [-1, 1]
+    return (int)round(1500.0f + (val * 400.0f));
 }
 
 void RovController::handleTranslate(float x, float y, float z) {
@@ -31,10 +29,10 @@ void RovController::update() {
 
     // Force mixing
     float fl = manual_surge + manual_sway + yawEffort;
-    float fr = -(manual_surge - manual_sway - yawEffort);
-    float bl = -(manual_surge - manual_sway + yawEffort);
+    float fr = manual_surge - manual_sway - yawEffort; 
+    float bl = manual_surge - manual_sway + yawEffort;
     float br = manual_surge + manual_sway - yawEffort;
-    
+
     float ml = manual_heave + rollEffort;
     float mr = manual_heave - rollEffort;
     
