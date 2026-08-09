@@ -7,7 +7,7 @@ Networking:
 
 RovTelemetry struct (from firmware, little-endian):
     float depth
-    float vel_x, vel_y, vel_z
+    float acc_x, acc_y, acc_z
     float roll, pitch, yaw
     int8_t temp_c
     bool  isGripperHold (1 byte)
@@ -26,7 +26,6 @@ import struct
 import threading
 import time
 import socket
-import signal
 from collections import deque
 
 import logging
@@ -38,6 +37,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
+from contextlib import asynccontextmanager
 
 from camera import discover_and_stream_camera, check_opencv_environment
 import rtsp
@@ -45,15 +45,14 @@ from pyzbar.pyzbar import decode as qr_decode
 
 from data_source import get_commands, pack_correct_depth
 
-
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Directory & Logger Setup
+# Directory and Logger Setup
 DATA_DIR = Path("data")
 VIDEO_DIR = DATA_DIR / "video"
 LOG_DIR = DATA_DIR / "logs"
 
+# Camera state setup
+LATEST_FRAME = b""
+SHUTDOWN_EVENT = threading.Event()
 VIDEO_WRITER = None
 
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
@@ -71,24 +70,6 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("ROV")
-
-
-# -- Interrupt handler ----
-def handle_signal(signum, frame):
-    global VIDEO_WRITER
-    logger.info(f"\n[SIGNAL] Received signal {signum}, saving video and exiting")
-    if VIDEO_WRITER is not None and VIDEO_WRITER.isOpened():
-        VIDEO_WRITER.release()
-    sys.exit(0)
-
-if hasattr(signal, 'SIGINT'):
-    signal.signal(signal.SIGINT, handle_signal)
-
-if hasattr(signal, 'SIGTERM'):
-    signal.signal(signal.SIGTERM, handle_signal)
-
-if hasattr(signal, 'SIGBREAK'):
-    signal.signal(signal.SIGBREAK, handle_signal)
 
 
 # -- Network config -------------------------------------------------------------
@@ -117,7 +98,7 @@ CMD_NAMES = {
 # -- Shared state ---------------------------------------------------------------
 telemetry = {
     "depth": 0.0,
-    "vel_x": 0.0, "vel_y": 0.0, "vel_z": 0.0,
+    "acc_x": 0.0, "acc_y": 0.0, "acc_z": 0.0,
     "roll": 0.0, "pitch": 0.0, "yaw": 0.0,
     "temp_c": 0,
     "isGripperHold": False,
@@ -143,7 +124,7 @@ recv_sock.settimeout(1.0)
 
 def _recv_loop():
     """Listen for telemetry and callback packets from the ESP32."""
-    while True:
+    while not SHUTDOWN_EVENT.is_set():
         try:
             data, addr = recv_sock.recvfrom(256)
         except socket.timeout:
@@ -157,12 +138,12 @@ def _recv_loop():
         if len(data) == TELEMETRY_SIZE:
             # RovTelemetry
             depth, vx, vy, vz, roll, pitch, yaw, temp_int, grip_b, light_b = struct.unpack(
-                "<fffffffiBB", data
+                "<fffffffbBB", data
             )
             telemetry["depth"]          = round(depth, 3)
-            telemetry["vel_x"]          = round(vx, 3)
-            telemetry["vel_y"]          = round(vy, 3)
-            telemetry["vel_z"]          = round(vz, 3)
+            telemetry["acc_x"]          = round(vx, 3)
+            telemetry["acc_y"]          = round(vy, 3)
+            telemetry["acc_z"]          = round(vz, 3)
             telemetry["roll"]           = round(roll, 3)
             telemetry["pitch"]          = round(pitch, 3)
             telemetry["yaw"]            = round(yaw, 3)
@@ -193,7 +174,7 @@ def _recv_loop():
 
 def _send_loop():
     """Poll joystick at 50 Hz, pack commands, and send to ESP32."""
-    while True:
+    while not SHUTDOWN_EVENT.is_set():
         commands = get_commands()
         for label, pkt in commands:
             try:
@@ -211,56 +192,107 @@ threading.Thread(target=_send_loop, daemon=True).start()
 
 
 # -- RTSP + QR video stream -----------------------------------------------------
-def generate_frames():
-    global VIDEO_WRITER
+def camera_background_task():
+    global VIDEO_WRITER, LATEST_FRAME
     FRAME_DELAY = 0.033
-    FPS = int(1 / FRAME_DELAY)
-
-    # Video Writer Initialization
+    
     video_filename = str(VIDEO_DIR / f"rov_dagonaut_{time.strftime('%Y%m%d_%H%M%S')}.avi")
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-
     last_qr_time = 0.0
-    try:
-        with rtsp.Client(rtsp_server_uri=RTSP_URL, verbose=False) as client:
-            while True:
-                image = client.read()
-                width, height
-                if image is None:
-                    time.sleep(FRAME_DELAY)
-                    continue
+
+    while not SHUTDOWN_EVENT.is_set():
+        try:
+            # Open RTSP connection
+            with rtsp.Client(rtsp_server_uri=RTSP_URL, verbose=False) as client:
+                stall_counter = 0
                 
-                # Save video feed frame-by-frame
-                if VIDEO_WRITER is None:
-                    VIDEO_WRITER = cv2.VideoWriter(video_filename, fourcc, FPS, (image.width, image.height))
+                while not SHUTDOWN_EVENT.is_set():
+                    image = client.read()
+                    
+                    if image is None:
+                        stall_counter += 1
+                        if stall_counter > 60:
+                            logger.warning("[CAMERA] RTSP stalled. Reconnecting...")
+                            break
+                        time.sleep(FRAME_DELAY)
+                        continue
+                        
+                    stall_counter = 0
 
-                frame_bgr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-                VIDEO_WRITER.write(frame_bgr)
+                    # Convert to OpenCV BGR
+                    frame_bgr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
-                decoded = qr_decode(image)
-                if decoded:
-                    telemetry["qr_code"] = decoded[0].data.decode()
-                    last_qr_time = time.time()
-                    logger.info(f"[camera] QR CODE SCANNED: {telemetry['qr_code']}")
+                    # Safely Initialize Video Writer
+                    if VIDEO_WRITER is None:
+                        height, width = frame_bgr.shape[:2]
+                        VIDEO_WRITER = cv2.VideoWriter(video_filename, fourcc, 30, (width, height))
 
-                elif time.time() - last_qr_time > 1.0:
-                    telemetry["qr_code"] = ""
+                    VIDEO_WRITER.write(frame_bgr)
 
-                buf = io.BytesIO()
-                image.save(buf, format="JPEG")
-                frame = buf.getvalue()
-                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
-                time.sleep(FRAME_DELAY)
+                    # QR Code Scanning
+                    decoded = qr_decode(image)
+                    if decoded:
+                        telemetry["qr_code"] = decoded[0].data.decode()
+                        last_qr_time = time.time()
+                        logger.info(f"[camera] QR CODE SCANNED: {telemetry['qr_code']}")
+                    elif time.time() - last_qr_time > 1.0:
+                        telemetry["qr_code"] = ""
 
-    except TimeoutError:
-        print(f"[CAMERA] Timed out, unable to connect into RTSP stream URL '{RTSP_URL}'")
+                    # Compress to JPEG for Web GUI
+                    success, buffer = cv2.imencode('.jpg', frame_bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                    if success:
+                        LATEST_FRAME = buffer.tobytes()
 
+                    time.sleep(FRAME_DELAY)
+
+        except TimeoutError:
+            print(f"[CAMERA] Timed out, unable to connect into RTSP stream URL '{RTSP_URL}'")
+            time.sleep(2.0)
+
+        except Exception as e:
+            print(f"[CAMERA] Unknown error: '{e}'")
+            logger.error(f"[CAMERA] Feed error: {e}. Retrying...")
+            time.sleep(2.0)
+            
+    # Clean up writer only once during full application shutdown
+    if VIDEO_WRITER is not None:
+        VIDEO_WRITER.release()
+        logger.info("[CAMERA] Video writer saved and closed cleanly.")
+
+
+def web_streamer():
+    """Streams the latest frame from memory to the browser."""
+    while not SHUTDOWN_EVENT.is_set():
+        if LATEST_FRAME:
+            yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + LATEST_FRAME + b"\r\n")
+        time.sleep(0.033)
+
+
+# -- App Lifespan ----------------------------------------------------------------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # App Startup: Launch the camera thread
+    cam_thread = threading.Thread(target=camera_background_task, daemon=True)
+    cam_thread.start()
+    
+    yield  # App runs here
+    
+    # App Shutdown: Set event to break all loops gracefully
+    logger.info("[SHUTDOWN] Stopping all processes...")
+    SHUTDOWN_EVENT.set()
+    cam_thread.join(timeout=3.0)
+
+    try:
+        send_sock.close()
+        recv_sock.close()
+        logger.info("[SHUTDOWN] Network sockets closed.")
     except Exception as e:
-        print(f"[CAMERA] Unknown error: '{e}'")
-        
-    finally:
-        if VIDEO_WRITER is not None:
-            VIDEO_WRITER.release()
+        logger.error(f"[SHUTDOWN] Socket cleanup error: {e}")
+    
+
+# -- App Declaration
+app = FastAPI(lifespan=lifespan)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # -- HTTP routes ----------------------------------------------------------------
@@ -268,11 +300,14 @@ def generate_frames():
 async def get_interface():
     return FileResponse("templates/index.html")
 
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse("static/favicon.ico")
+
 @app.get("/video_feed")
 async def get_video_feed():
-    return StreamingResponse(
-        generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame"
-    )
+    return StreamingResponse(web_streamer(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 @app.post("/correct_depth")
 async def correct_depth(payload: dict):

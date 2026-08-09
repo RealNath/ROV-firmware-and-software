@@ -33,8 +33,27 @@ function initLiveClock() {
   setInterval(updateClock, 1000);
 }
 
+
+const formatTelemetry = (val, decimals = 3, fallback = "0.000") => {
+  return (typeof val === "number" && !isNaN(val)) ? val.toFixed(decimals) : fallback;
+};
+
 // Initialize clock when DOM is loaded
 document.addEventListener('DOMContentLoaded', initLiveClock);
+
+
+// Initialize RTSP stream source
+document.addEventListener("DOMContentLoaded", () => {
+  // Wait until the window fully fires the 'load' event
+  window.addEventListener("load", () => {
+    const videoEl = document.getElementById("videoStream");
+    if (videoEl) {
+      // Set the src ONLY after page load is 100% complete
+      videoEl.src = "/video_feed";
+    }
+  });
+});
+
 
 // -- WebSocket status -------------------------------------------------------
 ws.onopen = () => {
@@ -52,15 +71,17 @@ ws.onmessage = (event) => {
 
   // Telemetry
   const t = payload.telemetry;
-  document.getElementById("t-depth").textContent            = t.depth.toFixed(3);
-  document.getElementById("t-roll").textContent             = t.roll.toFixed(3);
-  document.getElementById("t-pitch").textContent            = t.pitch.toFixed(3);
-  document.getElementById("t-yaw").textContent              = t.yaw.toFixed(3);
-  document.getElementById("t-ax").textContent               = t.vel_x.toFixed(3);
-  document.getElementById("t-ay").textContent               = t.vel_y.toFixed(3);
-  document.getElementById("t-az").textContent               = t.vel_z.toFixed(3);
-  document.getElementById("t-temperature").textContent      = t.temp_c
-  document.getElementById("qr-value").textContent           = t.qr_code || "---";
+  if(t){
+    document.getElementById("t-depth").textContent            = formatTelemetry(t.depth);
+    document.getElementById("t-roll").textContent             = formatTelemetry(t.roll);
+    document.getElementById("t-pitch").textContent            = formatTelemetry(t.pitch);
+    document.getElementById("t-yaw").textContent              = formatTelemetry(t.yaw);
+    document.getElementById("t-ax").textContent               = formatTelemetry(t.acc_x);
+    document.getElementById("t-ay").textContent               = formatTelemetry(t.acc_y);
+    document.getElementById("t-az").textContent               = formatTelemetry(t.acc_z);
+    document.getElementById("t-temperature").textContent      = formatTelemetry(t.temp_c, 1, "--");
+    document.getElementById("qr-value").textContent           = t.qr_code || "---";
+  }
 
   const gripEl  = document.getElementById("t-grip");
   const lightEl = document.getElementById("t-light");
@@ -75,10 +96,14 @@ ws.onmessage = (event) => {
   }
 
   // Command log
-  renderLog(cmdLog, payload.commands, "cmd", cmdCount);
+  if(payload.commands){
+    renderLog(cmdLog, payload.commands, "cmd", cmdCount);
+  }
 
   // Callback log
-  renderLog(cbLog, payload.callbacks, "cb", cbCount);
+  if(payload.callbacks){
+    renderLog(cbLog, payload.callbacks, "cb", cbCount);
+  }
 };
 
 // -- Log renderer -----------------------------------------------------------

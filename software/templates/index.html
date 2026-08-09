@@ -38,7 +38,7 @@
 
       <div class="card camera-card">
         <h2>Camera Feed</h2>
-        <img src="/video_feed" alt="RTSP stream" id="videoStream">
+        <img id="videoStream" alt="RTSP stream" />
         <div class="qr-bar">QR: <span id="qr-value">------</span></div>
       </div>
 
@@ -89,7 +89,7 @@
             <span class="telem-value badge" id="t-light">OFF</span>
           </div>
           <div class="telem-item">
-            <span class="telem-label">Internal Temperature </span>
+            <span class="telem-label">Internal Temp. </span>
             <span class="telem-value badge" id="t-temperature">OFF</span>
             <span class="telem-unit">celcius</span>
           </div>
@@ -136,7 +136,7 @@
 
   </main>
 
-  <script src="/static/index.js" type="module"></script>
   <script src="/static/visualizer.js"></script>
+  <script src="/static/index.js" type="module"></script>
 </body>
 </html>
