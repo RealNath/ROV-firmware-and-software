@@ -6,18 +6,19 @@
 #include "thruster_control.h"
 #include "rov_controller.h"
 
+#define TELEMETRY_FREQUENCY 10
+#define TELEMETRY_PERIOD (1000 / TELEMETRY_FREQUENCY)
 
 EthernetHandler *eth;
 SensorHandler *sensor;
 ThrusterHandler *thrusters;
-RovController rovControl;
+RovController *rovControl;
 
 const IPAddress STATIC_IP(192, 168, 42, 177);
 const IPAddress GATEWAY(192, 168, 42, 1);
 const IPAddress SUBNET(255, 255, 255, 0);
 const IPAddress REMOTE_IP(192, 168, 42, 99);
 
-uint64_t last_pid_time = 0;
 uint64_t last_telemetry_time = 0;
 
 
@@ -43,9 +44,9 @@ void setup() {
         while(true);
     }
     
-    // Initialize Thrusters
-    thrusters = new ThrusterHandler(ESC_LOW, ESC_HIGH, ESC_NEUTRAL); // Need to re-instantiate it since it was removed
-    rovControl.setThrusterHandler(thrusters);
+    // Initialize Thrusters and controller (never returns NULL)
+    thrusters = new ThrusterHandler(ESC_LOW, ESC_HIGH, ESC_NEUTRAL);
+    rovControl = new RovController(thrusters);
 
     // Initialize Ethernet connection
     eth = new EthernetHandler(STATIC_IP, GATEWAY, SUBNET);
@@ -54,25 +55,27 @@ void setup() {
         while(true);
     }
     
-    last_pid_time = millis();
 }
 
 
 
 void loop() {
-    unsigned long now = millis();
+    uint64_t now = millis();
     
-    // 1. Receive Commands
+    // Receive Commands
     RovCommand cmd;
-    eth->receiveCommand(cmd);
-    
-    // 2. Execute 50Hz PID Control Loop 
-    float dt = (now - last_pid_time) / 1000.0f;
-    if(dt >= 0.02f) {
+    if(eth->receiveCommand(cmd)){
+        eth->sendCallback(cmd);
+    }
+
+    rovControl->update();
+
+    // Send Telemetry to Surface at 10Hz 
+    if(now - last_telemetry_time >= TELEMETRY_PERIOD){
+
         // Read IMU data
         sensors_vec_t orientationData = sensor->getRotation();
         sensors_vec_t accData = sensor->getLinearAcceleration();
-        sensors_vec_t rotationVel = sensor->getRotationVelocity();
         
         currTelemetry.accelerationData.x = accData.x;         // Acceleration on X-axis
         currTelemetry.accelerationData.y = accData.y;         // Acceleration on Y-axis
@@ -83,15 +86,9 @@ void loop() {
         currTelemetry.depth = sensor->getApproxDepth();       // Depth
         currTelemetry.temperature = sensor->getTemperature(); // Temperature
 
-        // Run PID for stabilization and write to thrusters
-        rovControl.update(rotationVel, dt);
+        eth->sendTelemetry(currTelemetry);
+        last_telemetry_time = now;
 
-        // 3. Send Telemetry to Surface at 10Hz 
-        if(now - last_telemetry_time >= 100){
-            eth->sendTelemetry(currTelemetry);
-            last_telemetry_time = now;
-        }
-
-        last_pid_time = now;
     }
+
 }

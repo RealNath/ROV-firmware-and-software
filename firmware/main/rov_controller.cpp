@@ -1,16 +1,10 @@
 #include "rov_controller.h"
 
-RovController::RovController() 
-    : manual_surge(0), manual_sway(0), manual_heave(0),
-      manual_yaw(0), manual_roll(0),
-      yawRatePID(1.0, 0.1, 0.05, true),
-      rollRatePID(1.0, 0.1, 0.05, true),
-      thrusters(nullptr)
-{}
+RovController::RovController(ThrusterHandler *thrusters) : 
+    manual_surge(0), manual_sway(0), manual_heave(0),
+    manual_yaw(0), manual_roll(0),
+    thrusters(thrusters) {}
 
-void RovController::setThrusterHandler(ThrusterHandler* tm) {
-    thrusters = tm;
-}
 
 float RovController::mapToPWM(float val) {
     if(val < -1.0f) val = -1.0f;
@@ -29,25 +23,11 @@ void RovController::handleRotate(float roll, float pitch, float yaw) {
     manual_yaw = yaw;
 }
 
-void RovController::update(const sensors_vec_t& rotationVelocity, float dt) {
+void RovController::update() {
     if(!thrusters) return;
 
     float yawEffort = manual_yaw;
-    if (abs(manual_yaw) < 0.05f) {
-        // Assume rotationVelocity.z is yaw rate in degrees/sec or rad/sec
-        yawEffort = yawRatePID.compute(0.0f, rotationVelocity.z, dt);
-    }
-    else {
-        yawRatePID.reset();
-    }
-
     float rollEffort = manual_roll;
-    if(abs(manual_roll) < 0.05f) {
-        rollEffort = rollRatePID.compute(0.0f, rotationVelocity.x, dt); // using x for roll rate
-    }
-    else {
-        rollRatePID.reset();
-    }
 
     // Force mixing
     float fl = manual_surge + manual_sway + yawEffort;
@@ -73,6 +53,7 @@ void RovController::update(const sensors_vec_t& rotationVelocity, float dt) {
         mr /= max_vert;
     }
 
+    // Set thrusters
     thrusters->setFrontLeft(mapToPWM(fl));
     thrusters->setFrontRight(mapToPWM(fr));
     thrusters->setBackLeft(mapToPWM(bl));

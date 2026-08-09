@@ -15,17 +15,15 @@ private:
     float manual_heave;
     float manual_yaw;
     float manual_roll;
-    
-    // PID objects removed
-    
+        
     float mapToPWM(float normalizedValue);
 
 public:
-    RovController();
-    void setThrusterHandler(ThrusterHandler* tm);
+    RovController(ThrusterHandler *thrusters);
+    ~RovController() {};
     
     void handleTranslate(float x, float y, float z);
     void handleRotate(float roll, float pitch, float yaw);
     
-    void update(const sensors_vec_t& rotationVelocity, float dt);
+    void update();
 };

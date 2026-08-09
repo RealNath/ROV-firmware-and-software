@@ -90,7 +90,6 @@ bool EthernetHandler::receiveCommand(RovCommand &commandOut) {
                     commandOut.translationData.y,
                     commandOut.translationData.z
                 );
-                sendCallback(commandOut);
                 break;
 
             case RovCommandType::Rotate:
@@ -99,7 +98,6 @@ bool EthernetHandler::receiveCommand(RovCommand &commandOut) {
                     commandOut.rotationData.pitch,
                     commandOut.rotationData.yaw
                 );
-                sendCallback(commandOut);
                 break;
 
             case RovCommandType::SetLightOn:
@@ -110,7 +108,6 @@ bool EthernetHandler::receiveCommand(RovCommand &commandOut) {
 
             case RovCommandType::CorrectDepth:
                 sensor->correctDepthConstant(commandOut.depthCorrection);
-                sendCallback(commandOut);
                 break;
 
             default:
