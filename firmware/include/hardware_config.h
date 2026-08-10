@@ -32,6 +32,7 @@
 #define ESC_LOW             1000
 #define ESC_HIGH            2000
 #define ESC_NEUTRAL         1500
+#define ESC_SAFETY_MARGIN   100
 
 // --- ADC CHANNELS ---
 #define ADS1115_PRESSURE_CH 0

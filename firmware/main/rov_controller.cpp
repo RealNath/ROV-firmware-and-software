@@ -6,8 +6,10 @@ RovController::RovController(ThrusterHandler *thrusters) :
     thrusters(thrusters) {}
 
 
-float RovController::mapToPWM(float val) { // Assume val is already between [-1, 1]
-    return (int)round(1500.0f + (val * 400.0f));
+// Assume val is already between [-1, 1]
+float RovController::mapToPWM(float val) {
+    // Mapped [-1, 1] into PWM in range [1100, 1900]
+    return (int) round((float) ESC_NEUTRAL + (val * (float) (ESC_HIGH - ESC_NEUTRAL - ESC_SAFETY_MARGIN)));
 }
 
 void RovController::handleTranslate(float x, float y, float z) {

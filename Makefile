@@ -3,8 +3,44 @@
 ESP32_ROOT ?= firmware
 ESP32_SRC ?= main
 ESP32_PORT ?= /dev/ttyUSB0
-ESP32_FQBN ?= esp32:esp32:esp32
+ESP32_BOARD ?= esp32s3
+ESP32_FQBN ?= esp32:esp32:$(ESP32_BOARD)
 ESP32_BAUDRATE ?= 115200
+
+
+THRUSTER_FL_INV ?= 0
+THRUSTER_FR_INV ?= 0
+THRUSTER_ML_INV ?= 1
+THRUSTER_MR_INV ?= 1
+THRUSTER_BL_INV ?= 1
+THRUSTER_BR_INV ?= 1
+
+
+CFLAGS = -I$(ESP32_ROOT)/include
+
+ifeq ($(THRUSTER_FL_INV), 1)
+    CFLAGS += -DTHRUSTER_FL_INV
+endif
+
+ifeq ($(THRUSTER_FR_INV), 1)
+    CFLAGS += -DTHRUSTER_FR_INV
+endif
+
+ifeq ($(THRUSTER_ML_INV), 1)
+    CFLAGS += -DTHRUSTER_ML_INV
+endif
+
+ifeq ($(THRUSTER_MR_INV), 1)
+    CFLAGS += -DTHRUSTER_MR_INV
+endif
+
+ifeq ($(THRUSTER_BL_INV), 1)
+    CFLAGS += -DTHRUSTER_BL_INV
+endif
+
+ifeq ($(THRUSTER_BR_INV), 1)
+    CFLAGS += -DTHRUSTER_BR_INV
+endif
 
 
 all: esp32-build esp32-upload esp32-monitor
@@ -14,7 +50,7 @@ esp32-build:
 
 	arduino-cli compile \
 		--fqbn $(ESP32_FQBN) \
-		--build-property "compiler.cpp.extra_flags=-I$(ESP32_ROOT)/include" \
+		--build-property "compiler.cpp.extra_flags=$(CFLAGS)" \
 		--output-dir $(ESP32_ROOT)/build \
 		$(ESP32_ROOT)/$(ESP32_SRC)
 
@@ -42,7 +78,7 @@ esp32-reset:
 		echo "Port $(ESP32_PORT) is busy, close serial monitor or other process which uses this port first before resetting."; \
 		exit 1; \
 	fi; \
-	esptool --chip $(word 3, $(subst :, ,$(ESP32_FQBN))) \
+	esptool --chip $(ESP32_BOARD) \
 		--port $(ESP32_PORT) \
 		--no-stub flash_id
 
