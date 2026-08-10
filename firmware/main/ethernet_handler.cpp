@@ -7,7 +7,7 @@ extern const IPAddress GATEWAY;
 extern const IPAddress SUBNET;
 extern const IPAddress REMOTE_IP;
 extern SensorHandler *sensor;
-extern RovController rovControl;
+extern RovController *rovControl;
 
 EthernetHandler::EthernetHandler(IPAddress staticIP, IPAddress gatewayIP, IPAddress subnet): 
     lastRemotePort(0), 
@@ -87,7 +87,7 @@ bool EthernetHandler::receiveCommand(RovCommand &commandOut) {
 
         switch(commandOut.command){
             case RovCommandType::Translate:
-                rovControl.handleTranslate(
+                rovControl->handleTranslate(
                     commandOut.translationData.x,
                     commandOut.translationData.y,
                     commandOut.translationData.z
@@ -95,7 +95,7 @@ bool EthernetHandler::receiveCommand(RovCommand &commandOut) {
                 break;
 
             case RovCommandType::Rotate:
-                rovControl.handleRotate(
+                rovControl->handleRotate(
                     commandOut.rotationData.roll,
                     commandOut.rotationData.pitch,
                     commandOut.rotationData.yaw

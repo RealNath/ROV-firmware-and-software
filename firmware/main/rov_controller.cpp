@@ -30,12 +30,12 @@ void RovController::update() {
     float rollEffort = manual_roll;
 
     // Force mixing
-    float fl = manual_surge + manual_sway + yawEffort;
+    float fl = -(manual_surge + manual_sway + yawEffort);
     float fr = manual_surge - manual_sway - yawEffort; 
     float bl = manual_surge - manual_sway + yawEffort;
-    float br = manual_surge + manual_sway - yawEffort;
+    float br = -(manual_surge + manual_sway - yawEffort);
 
-    float ml = manual_heave + rollEffort;
+    float ml = -(manual_heave + rollEffort);
     float mr = manual_heave - rollEffort;
     
     // Normalize to [-1, 1] if exceeding
